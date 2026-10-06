@@ -69,7 +69,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # Example for best quality:  GEMINI_MODELS="gemini-2.5-pro,gemini-2.5-flash"
 MODELS = [
     m.strip()
-    for m in os.getenv("GEMINI_MODELS", "gemini-3.5-flash,gemini-3.5-flash-lite").split(",")
+    for m in os.getenv("GEMINI_MODELS", "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-1.5-flash").split(",")
     if m.strip()
 ]
 
@@ -1109,10 +1109,12 @@ async def set_commands(application: Application) -> None:
 
 
 def main() -> None:
-    if "YOUR_" in TELEGRAM_BOT_TOKEN or "YOUR_" in GEMINI_API_KEY:
-        print("\n❌ Please set TELEGRAM_BOT_TOKEN and GEMINI_API_KEY first.")
-        print('   Example: export TELEGRAM_BOT_TOKEN="123456:ABC..."')
-        print('            export GEMINI_API_KEY="AIza..."\n')
+    if not TELEGRAM_BOT_TOKEN or "YOUR_" in TELEGRAM_BOT_TOKEN:
+        log.error("TELEGRAM_BOT_TOKEN is missing! Please set the TELEGRAM_BOT_TOKEN environment variable.")
+        sys.exit(1)
+
+    if not GEMINI_API_KEY or "YOUR_" in GEMINI_API_KEY:
+        log.error("GEMINI_API_KEY is missing! Please set the GEMINI_API_KEY environment variable.")
         sys.exit(1)
 
     load_state()
