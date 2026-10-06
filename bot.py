@@ -25,10 +25,12 @@ Run (recommended: use environment variables):
 
 import asyncio
 import html
+import http.server
 import json
 import logging
 import os
 import re
+import socketserver
 import sys
 import threading
 import time
@@ -1108,6 +1110,28 @@ async def set_commands(application: Application) -> None:
         log.warning("Could not list Gemini models: %s", e)
 
 
+def start_health_check_server() -> None:
+    port = int(os.getenv("PORT", "8080"))
+
+    class HealthHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"SolveMate AI Bot is running!")
+
+        def log_message(self, format, *args):
+            pass
+
+    try:
+        httpd = socketserver.TCPServer(("", port), HealthHandler)
+        t = threading.Thread(target=httpd.serve_forever, daemon=True)
+        t.start()
+        log.info("Health check server listening on port %d", port)
+    except Exception as e:
+        log.warning("Could not start health check server: %s", e)
+
+
 def main() -> None:
     if not TELEGRAM_BOT_TOKEN or "YOUR_" in TELEGRAM_BOT_TOKEN:
         log.error("TELEGRAM_BOT_TOKEN is missing! Please set the TELEGRAM_BOT_TOKEN environment variable.")
@@ -1117,6 +1141,7 @@ def main() -> None:
         log.error("GEMINI_API_KEY is missing! Please set the GEMINI_API_KEY environment variable.")
         sys.exit(1)
 
+    start_health_check_server()
     load_state()
 
     app = (
